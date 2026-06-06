@@ -36,7 +36,7 @@ class MAEDevice:
         self.lib.MAE_Encode(self.ctx, c_input, c_output, length)
         
         ctx_struct_ptr = ctypes.cast(self.ctx, ctypes.POINTER(ctypes.c_uint64))
-        structural_key = ctx_struct_ptr[0]
+        structural_key = int(ctx_struct_ptr[0])
         
         return np.array(c_output, dtype=np.uint64), structural_key
 
@@ -50,19 +50,3 @@ class MAEDevice:
     def __del__(self):
         if hasattr(self, 'ctx') and self.ctx:
             self.lib.MAE_DestroyContext(self.ctx)
-
-if __name__ == "__main__":
-    ingress_payload = np.array([0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1], dtype=np.uint8)
-    
-    try:
-        engine = MAEDevice()
-        waveform, key = engine.pipeline_ingress(ingress_payload)
-        
-        independent_decoder = MAEDevice()
-        egress_payload = independent_decoder.pipeline_egress(waveform, len(ingress_payload), key)
-        
-        is_perfect_match = np.array_equal(ingress_payload, egress_payload)
-        print(f"MATCH:{is_perfect_match}")
-        
-    except Exception as error_log:
-        pass
